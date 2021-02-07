@@ -21,6 +21,11 @@ pub struct TSTree {
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+pub struct TSSymbolArray {
+    _unused: [u8; 0],
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct TSQuery {
     _unused: [u8; 0],
 }
@@ -192,6 +197,15 @@ extern "C" {
     #[doc = " or write to it. The length of the array will be written to the given"]
     #[doc = " `length` pointer."]
     pub fn ts_parser_included_ranges(self_: *const TSParser, length: *mut u32) -> *const TSRange;
+}
+extern "C" {
+    #[doc = " Suggest valid tokens for the parsed tree at a given point."]
+    pub fn ts_parser_suggest(
+        self_: *mut TSParser,
+        old_tree: *const TSTree,
+        input: TSInput,
+        position: TSPoint,
+    ) -> *const TSSymbolArray;
 }
 extern "C" {
     #[doc = " Use the parser to parse some source code and create a syntax tree."]

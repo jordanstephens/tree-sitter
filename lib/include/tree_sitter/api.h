@@ -249,6 +249,13 @@ TSTree *ts_parser_parse(
   TSInput input
 );
 
+TSSymbolArray ts_parser_suggest(
+    TSParser *self,
+    const TSTree *old_tree,
+    TSInput input,
+    TSPoint position
+);
+
 /**
  * Use the parser to parse some source code stored in one contiguous buffer.
  * The first two parameters are the same as in the `ts_parser_parse` function

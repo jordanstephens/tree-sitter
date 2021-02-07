@@ -1124,3 +1124,12 @@ fn simple_range(start: usize, end: usize) -> Range {
         end_point: Point::new(0, end),
     }
 }
+
+#[test]
+fn test_simple_suggestion() {
+    let mut parser = Parser::new();
+    parser.set_language(get_language("rust")).unwrap();
+    let suggestions = parser.suggest("pub", None, Point::new(0, 3));
+
+    assert_eq!(suggestions, vec!["struct", "fn", "enum"]);
+}

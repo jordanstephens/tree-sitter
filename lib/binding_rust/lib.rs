@@ -381,6 +381,22 @@ impl Parser {
         unsafe { ffi::ts_parser_print_dot_graphs(self.0.as_ptr(), -1) }
     }
 
+    pub fn suggest(
+        &mut self,
+        text: impl AsRef<[u8]>,
+        old_tree: Option<&Tree>,
+        position: Point,
+    ) -> Vec<()> {
+        let bytes = text.as_ref();
+        let len = bytes.len();
+        self.suggest_with(
+            &mut |i, _| if i < len { &bytes[i..] } else { &[] },
+            old_tree,
+            position,
+        );
+        vec![]
+    }
+
     /// Parse a slice of UTF8 text.
     ///
     /// # Arguments:
@@ -471,6 +487,49 @@ impl Parser {
         unsafe {
             let c_new_tree = ffi::ts_parser_parse(self.0.as_ptr(), c_old_tree, c_input);
             NonNull::new(c_new_tree).map(Tree)
+        }
+    }
+
+    pub fn suggest_with<'a, T: AsRef<[u8]>, F: FnMut(usize, Point) -> T>(
+        &mut self,
+        callback: &mut F,
+        old_tree: Option<&Tree>,
+        position: Point,
+    ) -> Vec<()> {
+        // A pointer to this payload is passed on every call to the `read` C function.
+        // The payload contains two things:
+        // 1. A reference to the rust `callback`.
+        // 2. The text that was returned from the previous call to `callback`.
+        //    This allows the callback to return owned values like vectors.
+        let mut payload: (&mut F, Option<T>) = (callback, None);
+
+        // This C function is passed to Tree-sitter as the input callback.
+        unsafe extern "C" fn read<'a, T: AsRef<[u8]>, F: FnMut(usize, Point) -> T>(
+            payload: *mut c_void,
+            byte_offset: u32,
+            position: ffi::TSPoint,
+            bytes_read: *mut u32,
+        ) -> *const c_char {
+            let (callback, text) = (payload as *mut (&mut F, Option<T>)).as_mut().unwrap();
+            *text = Some(callback(byte_offset as usize, position.into()));
+            let slice = text.as_ref().unwrap().as_ref();
+            *bytes_read = slice.len() as u32;
+            return slice.as_ptr() as *const c_char;
+        };
+
+        let c_input = ffi::TSInput {
+            payload: &mut payload as *mut (&mut F, Option<T>) as *mut c_void,
+            read: Some(read::<T, F>),
+            encoding: ffi::TSInputEncoding_TSInputEncodingUTF8,
+        };
+
+        let c_old_tree = old_tree.map_or(ptr::null_mut(), |t| t.0.as_ptr());
+        unsafe {
+            let suggestions =
+                ffi::ts_parser_suggest(self.0.as_ptr(), c_old_tree, c_input, position.into());
+            // TODO:
+            // NonNull::new(c_new_tree).map(Tree)
+            vec![]
         }
     }
 

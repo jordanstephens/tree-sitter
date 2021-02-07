@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+#include "./array.h"
 #include "./subtree.h"
 #include "tree_sitter/parser.h"
 
@@ -14,6 +15,8 @@ extern "C" {
 #define TREE_SITTER_LANGUAGE_VERSION_WITH_SMALL_STATES 11
 #define TREE_SITTER_LANGUAGE_VERSION_WITH_STATE_COUNT 12
 #define TREE_SITTER_LANGUAGE_VERSION_WITH_ALIAS_MAP 12
+
+typedef Array(TSSymbol) TSSymbolArray;
 
 typedef struct {
   const TSParseAction *actions;

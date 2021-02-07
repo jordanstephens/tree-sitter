@@ -1807,10 +1807,20 @@ void ts_parser_reset(TSParser *self) {
   self->accept_count = 0;
 }
 
+TSSymbolArray ts_parser_suggest(
+    TSParser *self,
+    const TSTree *old_tree,
+    TSInput input,
+    const TSPoint position
+) {
+  // TODO:
+  
+}
+
 TSTree *ts_parser_parse(
-  TSParser *self,
-  const TSTree *old_tree,
-  TSInput input
+    TSParser *self,
+    const TSTree *old_tree,
+    TSInput input
 ) {
   if (!self->language || !input.read) return NULL;
 
